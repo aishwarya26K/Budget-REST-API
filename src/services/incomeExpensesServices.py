@@ -1,8 +1,8 @@
 from flask_restful import Resource
 from flask import request, Response, json
-from datetime import timedelta, datetime
+from flask_jwt_extended import jwt_required
 
-from connection import getConnectToSQLdb
+from src.utils.connection import getConnectToSQLdb
 
 
 def validateIncomeExpense(request):
@@ -22,31 +22,29 @@ def validateIncomeExpense(request):
     return [True, actual_data, {}]
 
 class IncomeExpenses(Resource):
-    def get(self, id = None):
+    @jwt_required()
+    def get(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
+            contains = request.args.get('contains')
             cursor = connector.cursor(buffered=True)
-            if id:
-                query = "SELECT * FROM income_expenses where id = %s"
-                cursor.execute(query, [id])
-                income_expenses = cursor.fetchall()
-                connector.commit()
-                return Response(status = 200, response=json.dumps({"message":f"income_expenses with {id} not found"}) if not income_expenses else json.dumps({"income_expenses": income_expenses,"total_income_expenses": len(income_expenses)}))
-            else:
-                query = "SELECT * FROM income_expenses"
-                cursor.execute(query)
-                income_expenses = cursor.fetchall()
-                if not income_expenses:
-                    return Response(status=200, response=json.dumps({"message": "No income_expenses found"}))
-                connector.commit()
-                return Response(status=200, response=json.dumps({"income_expenses": income_expenses,"total_income_expenses": len(income_expenses)}))
+            query = "SELECT * FROM income_expenses "
+            filter_query = f"WHERE name like '%{contains}%'"
+            query = query + filter_query if contains else query
+            cursor.execute(query)
+            income_expenses = cursor.fetchall()
+            if not income_expenses:
+                return Response(status=200, response=json.dumps({"message": "No income_expenses found"}))
+            connector.commit()
+            return Response(status=200, response=json.dumps({"items": income_expenses,"count": len(income_expenses)}))
         except Exception as e:
             cursor and cursor.close()
             connector and connector.rollback()
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    @jwt_required()
     def post(self):
         cursor = None
         connector = getConnectToSQLdb()
@@ -90,6 +88,7 @@ class IncomeExpenses(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    @jwt_required()
     def put(self, id):
         cursor = None
         connector = getConnectToSQLdb()
@@ -117,6 +116,77 @@ class IncomeExpenses(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    @jwt_required()
+    def delete(self, id):
+        cursor = None
+        connector = getConnectToSQLdb()
+        try:
+            cursor = connector.cursor(buffered=True)
+            query = "SELECT * FROM income_expenses where id = %s"
+            cursor.execute(query, [id])
+            income_expense = cursor.fetchone()
+
+            if not income_expense:
+                return Response(status= 422, response=json.dumps({"message":f"Income expenses with {id} not found for delete"}))
+
+            query = "DELETE FROM income_expenses WHERE id = %s"
+            cursor.execute(query, [id])
+            connector.commit()
+            return Response(status=200, response=json.dumps({"message": "Income expenses deleted Successfully"}))
+        except Exception as e:
+            cursor and cursor.close()
+            connector and connector.rollback()
+            connector and connector.close()
+            return Response(status = 500, response=json.dumps({"message": str(e)}))
+
+
+class OneIncomeExpense(Resource):
+    @jwt_required()
+    def get(self, id):
+        cursor = None
+        connector = getConnectToSQLdb()
+        try:
+            cursor = connector.cursor(buffered=True)
+            query = "SELECT * FROM income_expenses where id = %s"
+            cursor.execute(query, [id])
+            income_expenses = cursor.fetchall()
+            connector.commit()
+            return Response(status = 200, response=json.dumps({"message":f"income_expenses with {id} not found"}) if not income_expenses else json.dumps({"items": income_expenses,"count": len(income_expenses)}))
+        except Exception as e:
+            cursor and cursor.close()
+            connector and connector.rollback()
+            connector and connector.close()
+            return Response(status = 500, response=json.dumps({"message": str(e)}))
+
+    @jwt_required()
+    def put(self, id):
+        cursor = None
+        connector = getConnectToSQLdb()
+        try:
+            data = request.get_json()
+            amount = data.get("amount")
+            if "amount" not in data.keys() or not amount:
+                return Response(status= 422, response=json.dumps({"message":f"amount is required"}))
+
+            cursor = connector.cursor(buffered=True)
+            query = "SELECT * FROM income_expenses where id = %s"
+            cursor.execute(query, [id])
+            income_expense = cursor.fetchone()
+
+            if not income_expense:
+                return Response(status= 422, response=json.dumps({"message":f"Income expenses with {id} not found for update"}))
+
+            query = "UPDATE income_expenses SET amount = %s where id = %s"
+            cursor.execute(query, [amount, id])
+            connector.commit()
+            return Response(status=200, response=json.dumps({"message": "Income expenses updated Successfully"}))
+        except Exception as e:
+            cursor and cursor.close()
+            connector and connector.rollback()
+            connector and connector.close()
+            return Response(status = 500, response=json.dumps({"message": str(e)}))
+
+    @jwt_required()
     def delete(self, id):
         cursor = None
         connector = getConnectToSQLdb()

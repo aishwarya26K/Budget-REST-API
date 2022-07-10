@@ -1,8 +1,8 @@
 from flask_restful import Resource
 from flask import request, Response, json
-from datetime import timedelta, datetime
+from flask_jwt_extended import jwt_required
 
-from connection import getConnectToSQLdb
+from src.utils.connection import getConnectToSQLdb
 
 
 def validateBudget(request):
@@ -22,31 +22,29 @@ def validateBudget(request):
     return [True, actual_data, {}]
 
 class Budgets(Resource):
-    def get(self, id = None):
+    @jwt_required()
+    def get(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
+            contains = request.args.get('contains')
             cursor = connector.cursor(buffered=True)
-            if id:
-                query = "SELECT * FROM budgets where id = %s"
-                cursor.execute(query, [id])
-                budget = cursor.fetchall()
-                connector.commit()
-                return Response(status = 200, response=json.dumps({"message":f"budget with {id} not found"}) if not budget else json.dumps({"budgets": budget,"total_budgets": len(budget)}))
-            else:
-                query = "SELECT * FROM budgets"
-                cursor.execute(query)
-                budgets = cursor.fetchall()
-                if not budgets:
-                    return Response(status=200, response=json.dumps({"message": "No budgets found"}))
-                connector.commit()
-                return Response(status=200, response=json.dumps({"budgets": budgets,"total_budgets": len(budgets)}))
+            query = "SELECT * FROM budgets "
+            filter_query = f"WHERE name like '%{contains}%'"
+            query = query + filter_query if contains else query
+            cursor.execute(query)
+            budgets = cursor.fetchall()
+            if not budgets:
+                return Response(status=200, response=json.dumps({"message": "No budgets found"}))
+            connector.commit()
+            return Response(status=200, response=json.dumps({"items": budgets,"count": len(budgets)}))
         except Exception as e:
             cursor and cursor.close()
             connector and connector.rollback()
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
-
+    
+    @jwt_required()
     def post(self):
         cursor = None
         connector = getConnectToSQLdb()
@@ -84,6 +82,26 @@ class Budgets(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+
+class Budget(Resource):
+    @jwt_required()
+    def get(self, id):
+        cursor = None
+        connector = getConnectToSQLdb()
+        try:
+            cursor = connector.cursor(buffered=True)
+            query = "SELECT * FROM budgets where id = %s"
+            cursor.execute(query, [id])
+            budget = cursor.fetchall()
+            connector.commit()
+            return Response(status = 200, response=json.dumps({"message":f"budget with {id} not found"}) if not budget else json.dumps({"items": budget,"count": len(budget)}))
+        except Exception as e:
+            cursor and cursor.close()
+            connector and connector.rollback()
+            connector and connector.close()
+            return Response(status = 500, response=json.dumps({"message": str(e)}))
+
+    @jwt_required()
     def put(self, id):
         cursor = None
         connector = getConnectToSQLdb()
@@ -111,6 +129,7 @@ class Budgets(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    @jwt_required()
     def delete(self, id):
         cursor = None
         connector = getConnectToSQLdb()

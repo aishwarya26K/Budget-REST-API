@@ -15,3 +15,20 @@
     - delete/ <int id>
      - id is required. if not id thwrow 422 error
      - if id then delete the user
+
+authentication:
+    - create users/authenticationService.py
+    - install flask-jwt-extended
+    - authenticationservice.py
+        - two methods to authenticate
+        - register
+            - validate all the required fields. and create user
+        - login
+            - 
+authorization:
+    -done
+
+api/v1/<model>?contains=
+
+eg: api/v1/users/?contains="r"
+

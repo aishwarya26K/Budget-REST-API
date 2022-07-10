@@ -1,36 +1,34 @@
 from flask_restful import Resource
 from flask import request, Response, json
-from datetime import timedelta, datetime
+from flask_jwt_extended import jwt_required
 
-from connection import getConnectToSQLdb
+from src.utils.connection import getConnectToSQLdb
 
 
-class Category(Resource):
-    def get(self, id = None):
+class Categories(Resource):
+    @jwt_required()
+    def get(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
             cursor = connector.cursor(buffered=True)
-            if id:
-                query = "SELECT * FROM categories where id = %s"
-                cursor.execute(query, [id])
-                category = cursor.fetchall()
-                connector.commit()
-                return Response(status = 200, response=json.dumps({"message":f"category with {id} not found"}) if not category else json.dumps({"categories": category,"total_categories": len(category)}))
-            else:
-                query = "SELECT * FROM categories"
-                cursor.execute(query)
-                categories = cursor.fetchall()
-                if not categories:
-                    return Response(status=200, response=json.dumps({"message": "No categories found"}))
-                connector.commit()
-                return Response(status=200, response=json.dumps({"categories": categories,"total_categories": len(categories)}))
+            contains = request.args.get('contains')
+            query = "SELECT * FROM categories "
+            filter_query = f"WHERE name like '%{contains}%'"
+            query = query + filter_query if contains else query
+            cursor.execute(query)
+            category = cursor.fetchall()
+            if not category:
+                return Response(status=200, response=json.dumps({"message": "No categories found"}))
+            connector.commit()
+            return Response(status=200, response=json.dumps({"items": category,"count": len(category)}))
         except Exception as e:
             cursor and cursor.close()
             connector and connector.rollback()
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
-
+    
+    @jwt_required()
     def post(self):
         cursor = None
         connector = getConnectToSQLdb()
@@ -62,6 +60,26 @@ class Category(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+
+class Category(Resource):
+    @jwt_required()
+    def get(self, id ):
+        cursor = None
+        connector = getConnectToSQLdb()
+        try:
+            cursor = connector.cursor(buffered=True)
+            query = "SELECT * FROM categories where id = %s"
+            cursor.execute(query, [id])
+            category = cursor.fetchall()
+            connector.commit()
+            return Response(status = 200, response=json.dumps({"message":f"category with {id} not found"}) if not category else json.dumps({"items": category,"count": len(category)}))
+        except Exception as e:
+            cursor and cursor.close()
+            connector and connector.rollback()
+            connector and connector.close()
+            return Response(status = 500, response=json.dumps({"message": str(e)}))
+    
+    @jwt_required()
     def put(self, id):
         cursor = None
         connector = getConnectToSQLdb()
@@ -89,6 +107,7 @@ class Category(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    @jwt_required()
     def delete(self, id):
         cursor = None
         connector = getConnectToSQLdb()

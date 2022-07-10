@@ -1,15 +1,21 @@
 [[source]]
-name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
-
-[dev-packages]
+name = "pypi"
 
 [packages]
 flask = "*"
+pytest = "*"
+requests = "*"
+apispec = "*"
+apispec-webframeworks = "*"
+marshmallow = "*"
 flask-restful = "*"
-response-format = "*"
+flasgger = "*"
 flask-mysqldb = "*"
+mysql-connector-python = "*"
+
+[dev-packages]
 
 [requires]
 python_version = "3.9"

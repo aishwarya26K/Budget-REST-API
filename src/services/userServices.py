@@ -1,8 +1,8 @@
 from flask_restful import Resource
 from flask import request, Response, json
-from datetime import timedelta, datetime
+from flask_jwt_extended import jwt_required
 
-from connection import getConnectToSQLdb
+from src.utils.connection import getConnectToSQLdb
 
 
 def validateUser(request,req_type):
@@ -39,32 +39,30 @@ def validateUser(request,req_type):
     return [True, actual_data, {}]
 
 class Users(Resource):
-    def get(self, id = None):
+    @jwt_required()
+    def get(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
+            contains = request.args.get('contains')
             cursor = connector.cursor(buffered=True)
-            if id:
-                query = "SELECT * FROM users where id = %s"
-                cursor.execute(query, [id])
-                user = cursor.fetchall()
-                connector.commit()
-                return Response(status = 200, response=json.dumps({"message":f"user with {id} not found"}) if not user else json.dumps({"users": user,"total_users": len(user)}))
-            else:
-                query = "SELECT * FROM users"
-                cursor.execute(query)
-                users = cursor.fetchall()
-                if not users:
-                    return Response(status=200, response=json.dumps({"message": "No users found"}))
-                connector.commit()
-                return Response(status=200, response=json.dumps({"users": users,"total_users": len(users)}))
+            query = "SELECT * FROM users "
+            filter_query = f"WHERE full_name like '%{contains}%'"
+            query = query + filter_query if contains else query
+            cursor.execute(query)
+            users = cursor.fetchall()
+            if not users:
+                return Response(status=200, response=json.dumps({"message": "No users found"}))
+            connector.commit()
+            return Response(status=200, response=json.dumps({"items": users,"count": len(users)}))
         except Exception as e:
             cursor and cursor.close()
             connector and connector.rollback()
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
-    #creating new user data 
+    #creating new user data
+    @jwt_required()
     def post(self):
         cursor = None
         connector = getConnectToSQLdb()
@@ -96,6 +94,63 @@ class Users(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+
+class User(Resource):
+    @jwt_required()
+    def get(self, id):
+        """
+        get users details
+        ---
+        parameters:
+          - in: path
+            name: id
+            type: integer
+            required: true
+          - in: query
+            name: contains
+            type: string
+            required: false
+        responses:
+          200:
+            description: returns user details 
+            schema:
+              id: User
+              properties:
+                users:
+                    type: array
+                    items:
+                        type: object
+                        properties: 
+                            full_name:
+                                type: string
+                                description: The name of the user
+                            email:
+                                type: string
+                                description: The email of the user
+                            created_at:
+                                type: string
+                                description: timestamp of when a user is created
+                total_users:
+                    type: integer 
+          
+                
+        """
+        cursor = None
+        connector = getConnectToSQLdb()
+        try:
+            cursor = connector.cursor(buffered=True)
+            query = "SELECT * FROM users where id = %s"
+            cursor.execute(query, [id])
+            user = cursor.fetchall()
+            connector.commit()
+            return Response(status = 200, response=json.dumps({"message":f"user with {id} not found"}) if not user else json.dumps({"items": user,"count": len(user)}))
+        except Exception as e:
+            cursor and cursor.close()
+            connector and connector.rollback()
+            connector and connector.close()
+            return Response(status = 500, response=json.dumps({"message": str(e)}))
+
+    @jwt_required()
     def put(self, id):
         cursor = None
         connector = getConnectToSQLdb()
@@ -121,6 +176,7 @@ class Users(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    @jwt_required()
     def delete(self, id):
         cursor = None
         connector = getConnectToSQLdb()
