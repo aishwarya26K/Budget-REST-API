@@ -1,9 +1,10 @@
 """Flask Application"""
 
 from flask import Flask, jsonify
-from flask_restful import Api
+# from flask_restx import Api
+from flask_restx import Api
 from flask_jwt_extended import JWTManager
-from flasgger import Swagger
+# from flasgger import Swagger
 
 from src.services.userServices import Users, User
 from src.services.budgetServices import Budgets, Budget
@@ -11,13 +12,26 @@ from src.services.categoryServices import Categories, Category
 from src.services.incomeExpensesServices import IncomeExpenses, OneIncomeExpense
 from src.services.auth import Register, Login
 
+authorizations = {
+    'apikey': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization'
+    }
+}
 
 app = Flask(__name__)
-api = Api(app)
+api = Api(app, authorizations=authorizations, security='apikey')
 
-swagger = Swagger(app)
 
+# app.config['SWAGGER'] = {
+#     'title': 'Budget REST API',
+#     'doc_dir': '../documentation'
+# }
 app.config["JWT_SECRET_KEY"] = "budget-app"
+
+# swagger = Swagger(app)
+
 jwt = JWTManager(app)
 
 api.add_resource(Users, "/api/v1/users/")

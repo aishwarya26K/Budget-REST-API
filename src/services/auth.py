@@ -1,14 +1,24 @@
-from flask_restful import Resource
+from flask_restx import Resource, Namespace, reqparse
 from flask import request, Response, json
 from flask_jwt_extended import create_access_token
 
 from src.utils.connection import getConnectToSQLdb
-from src.services.userServices import Users
 
+api = Namespace('Auth', description='Auth related apis')
+
+register_parser = reqparse.RequestParser()
+register_parser.add_argument('name', required=True, help='name required', location='json')
+register_parser.add_argument('email', required=True, help='email required', location='json')
+register_parser.add_argument('password',required=True, help='password required', location='json')
+register_parser.add_argument('confirm_password', required=True, help='confirm password required', location='json')
+
+login_parser = reqparse.RequestParser()
+login_parser.add_argument('email', required=True, help='email required', location='json')
+login_parser.add_argument('password',required=True, help='password required', location='json')
 
 def validateUser(request,req_type):
     required_fields_register = ["name", "email", "password", "confirm_password"]
-    required_fields_login = ["email", "password", "confirm_password"]
+    required_fields_login = ["email", "password"]
 
     data = request.get_json()
     error_fields = {}
@@ -32,20 +42,19 @@ def validateUser(request,req_type):
 
         if error_fields:
             return [False , actual_data, {"message": error_fields}]
-        
-        if actual_data.get("password") != actual_data.get("confirm_password"):
-            return [False, actual_data, {"message": "password mismatch"}]
     
     
     return [True, actual_data, {}]
 
 class Login(Resource):
+    @api.doc(security=[])
+    @api.expect(login_parser)
     def post(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
             [isValid, data ,errorObj] = validateUser(request, "Login")
-            if not isValid: return Response(status= 422, response=json.dumps(errorObj))
+            if not isValid: return Response(status= 400, response=json.dumps(errorObj))
 
             cursor = connector.cursor(buffered=True)
             query = "SELECT * FROM users where email = %s and password = %s"
@@ -66,9 +75,12 @@ class Login(Resource):
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
 class Register(Resource):
-    def post(self):
+    @api.doc(security=[], )
+    @api.expect(register_parser)
+    def post(self, **args):
         cursor = None
         connector = getConnectToSQLdb()
+        print(args, request)
         try:
             [isValid, data ,errorObj] = validateUser(request, "Register")
             if not isValid: return Response(status= 422, response=json.dumps(errorObj))

@@ -1,8 +1,21 @@
-from flask_restful import Resource
+from flask_restx import Resource, Namespace, reqparse
 from flask import request, Response, json
 from flask_jwt_extended import jwt_required
 
 from src.utils.connection import getConnectToSQLdb
+
+api = Namespace('Budgets', description='Budgets related apis')
+
+parser = reqparse.RequestParser()
+parser.add_argument('contains', help='filtering budget by name only', location='args')
+
+#PUT
+budget_put_parser = reqparse.RequestParser()
+budget_put_parser.add_argument('budget_name', required=True, help='budget name required', location='json')
+
+#PUT
+budget_post_parser = budget_put_parser.copy()
+budget_post_parser.add_argument('user_id', required=True, help='user id required', location='json')
 
 
 def validateBudget(request):
@@ -23,12 +36,13 @@ def validateBudget(request):
 
 class Budgets(Resource):
     @jwt_required()
+    @api.expect(parser)
     def get(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
             contains = request.args.get('contains')
-            cursor = connector.cursor(buffered=True)
+            cursor = connector.cursor(buffered=True, dictionary=True)
             query = "SELECT * FROM budgets "
             filter_query = f"WHERE name like '%{contains}%'"
             query = query + filter_query if contains else query
@@ -45,12 +59,13 @@ class Budgets(Resource):
             return Response(status = 500, response=json.dumps({"message": str(e)}))
     
     @jwt_required()
+    @api.expect(budget_post_parser)
     def post(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
             [isValid, data ,errorObj] = validateBudget(request)
-            if not isValid: return Response(status= 422, response=json.dumps(errorObj))
+            if not isValid: return Response(status= 400, response=json.dumps(errorObj))
 
             user_id = data.get('user_id')
             cursor = connector.cursor(buffered=True)
@@ -59,7 +74,7 @@ class Budgets(Resource):
             user = cursor.fetchone()
 
             if user is None:
-                return Response(status= 422, response=json.dumps({"message":f"No user found with {user_id}"}))
+                return Response(status= 400, response=json.dumps({"message":f"No user found with {user_id}"}))
             
             query = "SELECT * FROM budgets where user_id = %s"
             cursor.execute(query, [user_id])
@@ -73,7 +88,7 @@ class Budgets(Resource):
                 value = (data.get('budget_name'),user_id)
                 cursor.execute(query, value)
             else:
-                return Response(status=400, response=json.dumps({"message": "Budget exist"}))
+                return Response(status=200, response=json.dumps({"message": "Budget exist"}))
             connector.commit()
             return Response(status=200, response=json.dumps({"message": "Budget created Successfully"}))
         except Exception as e:
@@ -89,7 +104,7 @@ class Budget(Resource):
         cursor = None
         connector = getConnectToSQLdb()
         try:
-            cursor = connector.cursor(buffered=True)
+            cursor = connector.cursor(buffered=True, dictionary=True)
             query = "SELECT * FROM budgets where id = %s"
             cursor.execute(query, [id])
             budget = cursor.fetchall()
@@ -102,6 +117,7 @@ class Budget(Resource):
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
     @jwt_required()
+    @api.expect(budget_put_parser)
     def put(self, id):
         cursor = None
         connector = getConnectToSQLdb()
@@ -109,7 +125,7 @@ class Budget(Resource):
             data = request.get_json()
             budget_name = data.get("budget_name")
             if "budget_name" not in data.keys() or not budget_name:
-                return Response(status= 422, response=json.dumps({"message":f"Budget name is required"}))
+                return Response(status= 400, response=json.dumps({"message":f"Budget name is required"}))
 
             cursor = connector.cursor(buffered=True)
             query = "SELECT * FROM budgets where id = %s"
@@ -117,7 +133,7 @@ class Budget(Resource):
             budget = cursor.fetchone()
 
             if not budget:
-                return Response(status= 422, response=json.dumps({"message":f"Budget with {id} not found for update"}))
+                return Response(status= 400, response=json.dumps({"message":f"Budget with {id} not found for update"}))
 
             query = "UPDATE budgets SET name = %s where id = %s"
             cursor.execute(query, [budget_name, id])
@@ -140,7 +156,7 @@ class Budget(Resource):
             budget = cursor.fetchone()
 
             if not budget:
-                return Response(status= 422, response=json.dumps({"message":f"budget with {id} not found for delete"}))
+                return Response(status= 400, response=json.dumps({"message":f"budget with {id} not found for delete"}))
 
             query = "DELETE FROM budgets WHERE id = %s"
             cursor.execute(query, [id])

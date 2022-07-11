@@ -1,9 +1,23 @@
-from flask_restful import Resource
+from flask_restx import Resource, Namespace, reqparse
 from flask import request, Response, json
 from flask_jwt_extended import jwt_required
 
 from src.utils.connection import getConnectToSQLdb
 
+api = Namespace('Users', description='Users related apis')
+
+parser = reqparse.RequestParser()
+parser.add_argument('contains', help='filtering users by name only', location='args')
+
+#PUT
+users_parser = reqparse.RequestParser()
+users_parser.add_argument('name', required=True, help='name required', location='json')
+users_parser.add_argument('email', required=True, help='email required', location='json')
+users_parser.add_argument('password',required=True, help='password required', location='json')
+
+#POST
+users_post_parser = users_parser.copy()
+users_post_parser.add_argument('confirm_password', required=True, help='confirm password required', location='json')
 
 def validateUser(request,req_type):
     required_fields = ["name", "email", "password", "confirm_password"]
@@ -38,21 +52,24 @@ def validateUser(request,req_type):
     
     return [True, actual_data, {}]
 
+
+
 class Users(Resource):
     @jwt_required()
+    @api.expect(parser)
     def get(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
             contains = request.args.get('contains')
-            cursor = connector.cursor(buffered=True)
-            query = "SELECT * FROM users "
+            cursor = connector.cursor(buffered=True, dictionary=True)
+            query = "SELECT full_name, email, created_at FROM users "
             filter_query = f"WHERE full_name like '%{contains}%'"
             query = query + filter_query if contains else query
             cursor.execute(query)
             users = cursor.fetchall()
             if not users:
-                return Response(status=200, response=json.dumps({"message": "No users found"}))
+                return Response(status=400, response=json.dumps({"message": "No users found"}))
             connector.commit()
             return Response(status=200, response=json.dumps({"items": users,"count": len(users)}))
         except Exception as e:
@@ -63,12 +80,13 @@ class Users(Resource):
 
     #creating new user data
     @jwt_required()
+    @api.expect(users_post_parser)
     def post(self):
         cursor = None
         connector = getConnectToSQLdb()
         try:
             [isValid, data ,errorObj] = validateUser(request, "POST")
-            if not isValid: return Response(status= 422, response=json.dumps(errorObj))
+            if not isValid: return Response(status= 400, response=json.dumps(errorObj))
 
             cursor = connector.cursor(buffered=True)
             query = "SELECT * FROM users where email = %s"
@@ -85,7 +103,7 @@ class Users(Resource):
 
                 cursor.execute(query, value)
             else:
-                return Response(status=400, response=json.dumps({"message": "user exist"}))
+                return Response(status=200, response=json.dumps({"message": "user exist"}))
             connector.commit()
             return Response(status=200, response=json.dumps({"message": "Created Successfully"}))
         except Exception as e:
@@ -98,48 +116,11 @@ class Users(Resource):
 class User(Resource):
     @jwt_required()
     def get(self, id):
-        """
-        get users details
-        ---
-        parameters:
-          - in: path
-            name: id
-            type: integer
-            required: true
-          - in: query
-            name: contains
-            type: string
-            required: false
-        responses:
-          200:
-            description: returns user details 
-            schema:
-              id: User
-              properties:
-                users:
-                    type: array
-                    items:
-                        type: object
-                        properties: 
-                            full_name:
-                                type: string
-                                description: The name of the user
-                            email:
-                                type: string
-                                description: The email of the user
-                            created_at:
-                                type: string
-                                description: timestamp of when a user is created
-                total_users:
-                    type: integer 
-          
-                
-        """
         cursor = None
         connector = getConnectToSQLdb()
         try:
-            cursor = connector.cursor(buffered=True)
-            query = "SELECT * FROM users where id = %s"
+            cursor = connector.cursor(buffered=True, dictionary=True)
+            query = "SELECT full_name, email, created_at FROM users where id = %s"
             cursor.execute(query, [id])
             user = cursor.fetchall()
             connector.commit()
@@ -151,12 +132,13 @@ class User(Resource):
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
     @jwt_required()
+    @api.expect(users_parser)
     def put(self, id):
         cursor = None
         connector = getConnectToSQLdb()
         try:
             [isValid, data ,errorObj] = validateUser(request, "PUT")
-            if (not isValid): return Response(status= 422, response=json.dumps(errorObj))
+            if (not isValid): return Response(status= 400, response=json.dumps(errorObj))
 
             cursor = connector.cursor(buffered=True)
             query = "SELECT * FROM users where id = %s"
@@ -164,7 +146,7 @@ class User(Resource):
             user = cursor.fetchone()
 
             if not user:
-                return Response(status= 422, response=json.dumps({"message":f"User with {id} not found for update"}))
+                return Response(status= 400, response=json.dumps({"message":f"User with {id} not found for update"}))
 
             query = "UPDATE users SET email = %s, password = %s where id = %s"
             cursor.execute(query, [data.get("email"), data.get("password"), id])
@@ -187,7 +169,7 @@ class User(Resource):
             user = cursor.fetchone()
 
             if not user:
-                return Response(status= 422, response=json.dumps({"message":f"User with {id} not found for delete"}))
+                return Response(status= 400, response=json.dumps({"message":f"User with {id} not found for delete"}))
 
             query = "DELETE FROM users WHERE id = %s"
             cursor.execute(query, [id])
