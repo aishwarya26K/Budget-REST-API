@@ -15,6 +15,7 @@ flasgger = "*"
 flask-mysqldb = "*"
 mysql-connector-python = "*"
 flask-restx = "*"
+waitress = "*"
 
 [dev-packages]
 autopep8 = "*"

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "51cb65dba73d374e86669d063de11d48819ac23df6618c66c3a97fbebade60a0"
+            "sha256": "2ee659c087ea0a843e3539c5c388d2bb206307786451a914347aa59e52e3591e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -83,7 +83,7 @@
                 "sha256:854bf444933e37f5824ae7bfc1e98d5bce2ebe4160d46b5edf346a89358e99da",
                 "sha256:e6c6b4334fc50988a639d9b98aa429a0b57da6e17b9a44f0451f930b6967b7a4"
             ],
-            "markers": "sys_platform == 'win32'",
+            "markers": "platform_system == 'Windows'",
             "version": "==0.4.5"
         },
         "flasgger": {
@@ -163,10 +163,10 @@
         },
         "jsonschema": {
             "hashes": [
-                "sha256:f2bbe8d5919e5d5428bd752959331ca19ef790a45ed47e61635f68393ea1d07d",
-                "sha256:f4006f7a719608d9ecd123e55b3ac994b8be4e36f2406a38797a5aacdb890100"
+                "sha256:201b83d676351d51d0dc617be6f77c449feee32ca221b4a99a09d77661740643",
+                "sha256:25203dbebd62a1179f810f14339f7a638baaf279b5cc3b738a58c3744af56d65"
             ],
-            "version": "==4.7.0"
+            "version": "==4.7.1"
         },
         "markupsafe": {
             "hashes": [
@@ -418,6 +418,14 @@
                 "sha256:879ba4d1e89654d9769ce13121e0f94310ea32e8d2f8cf587b77c08bbcdb30d6"
             ],
             "version": "==1.26.10"
+        },
+        "waitress": {
+            "hashes": [
+                "sha256:7500c9625927c8ec60f54377d590f67b30c8e70ef4b8894214ac6e4cad233d2a",
+                "sha256:780a4082c5fbc0fde6a2fcfe5e26e6efc1e8f425730863c04085769781f51eba"
+            ],
+            "index": "pypi",
+            "version": "==2.1.2"
         },
         "werkzeug": {
             "hashes": [
