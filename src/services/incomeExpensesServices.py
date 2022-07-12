@@ -38,6 +38,7 @@ def validateIncomeExpense(request):
     
     return [True, actual_data, {}]
 
+@api.route("/income_expenses")
 class IncomeExpenses(Resource):
     @jwt_required()
     @api.expect(parser)
@@ -108,6 +109,7 @@ class IncomeExpenses(Resource):
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
 
+@api.route("/income_expenses/<int:id>")
 class OneIncomeExpense(Resource):
     @jwt_required()
     def get(self, id):

@@ -53,7 +53,7 @@ def validateUser(request,req_type):
     return [True, actual_data, {}]
 
 
-
+@api.route("/users")
 class Users(Resource):
     @jwt_required()
     @api.expect(parser)
@@ -112,7 +112,7 @@ class Users(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
-
+@api.route("/users/<int:id>")
 class User(Resource):
     @jwt_required()
     def get(self, id):

@@ -46,6 +46,7 @@ def validateUser(request,req_type):
     
     return [True, actual_data, {}]
 
+@api.route('/login')
 class Login(Resource):
     @api.doc(security=[])
     @api.expect(login_parser)
@@ -74,6 +75,7 @@ class Login(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+@api.route('/register')
 class Register(Resource):
     @api.doc(security=[], )
     @api.expect(register_parser)

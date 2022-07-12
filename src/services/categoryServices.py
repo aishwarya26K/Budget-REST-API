@@ -13,7 +13,7 @@ parser.add_argument('contains', help='filtering category by name only', location
 category_parser = reqparse.RequestParser()
 category_parser.add_argument('category_name', required=True, help='category name required', location='json')
 
-
+@api.route('/categories')
 class Categories(Resource):
     @jwt_required()
     @api.expect(parser)
@@ -72,6 +72,7 @@ class Categories(Resource):
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
 
+@api.route('/categories/<int:id>')
 class Category(Resource):
     @jwt_required()
     def get(self, id ):

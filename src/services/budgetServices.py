@@ -34,6 +34,7 @@ def validateBudget(request):
     
     return [True, actual_data, {}]
 
+@api.route("/budgets")
 class Budgets(Resource):
     @jwt_required()
     @api.expect(parser)
@@ -97,7 +98,7 @@ class Budgets(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
-
+@api.route("/budgets/<int:id>")
 class Budget(Resource):
     @jwt_required()
     def get(self, id):

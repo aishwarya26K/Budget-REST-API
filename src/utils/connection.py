@@ -1,13 +1,14 @@
 import mysql.connector
+import os
  
 def getConnectToSQLdb():
     mydb = None
     try:
         mydb = mysql.connector.connect(
-        host="localhost",
-        username="root",
-        password="",
-        database="budget"
+        host=os.getenv("MYSQL_HOST"),
+        username=os.getenv("MYSQL_USER_NAME"),
+        password=os.getenv("MYSQL_PASSWORD"),
+        database=os.getenv("MYSQL_DB")
         )
 
         return mydb
