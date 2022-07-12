@@ -22,3 +22,8 @@ api.init_app(app)
 app.config["JWT_SECRET_KEY"] = "budget-app"
 
 jwt = JWTManager(app)
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return identity

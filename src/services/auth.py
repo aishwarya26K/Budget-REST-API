@@ -57,7 +57,7 @@ class Login(Resource):
             [isValid, data ,errorObj] = validateUser(request, "Login")
             if not isValid: return Response(status= 400, response=json.dumps(errorObj))
 
-            cursor = connector.cursor(buffered=True)
+            cursor = connector.cursor(buffered=True, dictionary=True)
             query = "SELECT * FROM users where email = %s and password = %s"
 
             cursor.execute(query, [data.get("email"), data.get("password")])
@@ -67,7 +67,7 @@ class Login(Resource):
             if user is None:
                 return Response(status=401, response=json.dumps({"message": "User doesn't exist. Please register."}))
             else:
-                access_token = create_access_token(identity=data.get("email"))  #default expires in 15mins
+                access_token = create_access_token(identity=user)  #default expires in 15mins
                 return Response(status=200, response=json.dumps({"message": "login successfully","access_token":access_token}))
         except Exception as e:
             cursor and cursor.close()
@@ -85,7 +85,7 @@ class Register(Resource):
         print(args, request)
         try:
             [isValid, data ,errorObj] = validateUser(request, "Register")
-            if not isValid: return Response(status= 422, response=json.dumps(errorObj))
+            if not isValid: return Response(status= 400, response=json.dumps(errorObj))
 
             cursor = connector.cursor(buffered=True)
             query = "SELECT * FROM users where email = %s"

@@ -17,6 +17,8 @@ mysql-connector-python = "*"
 flask-restx = "*"
 waitress = "*"
 python-dotenv = "*"
+Flask-JWT-Extended = "*"
+mysqlclient = "*"
 
 [dev-packages]
 autopep8 = "*"

@@ -3,10 +3,11 @@ from flask import request, Response, json
 from flask_jwt_extended import jwt_required
 
 from src.utils.connection import getConnectToSQLdb
+from src.utils.requestParsers import pagination_parser
 
 api = Namespace('Users', description='Users related apis')
 
-parser = reqparse.RequestParser()
+parser = pagination_parser.copy()
 parser.add_argument('contains', help='filtering users by name only', location='args')
 
 #PUT
@@ -21,7 +22,7 @@ users_post_parser.add_argument('confirm_password', required=True, help='confirm 
 
 def validateUser(request,req_type):
     required_fields = ["name", "email", "password", "confirm_password"]
-    required_fields_update = ["email", "password", "confirm_password"]
+    required_fields_update = ["name","email", "password"]
 
     data = request.get_json()
     error_fields = {}
@@ -45,16 +46,13 @@ def validateUser(request,req_type):
 
         if error_fields:
             return [False , actual_data, {"message": error_fields}]
-        
-        if actual_data.get("password") != actual_data.get("confirm_password"):
-            return [False, actual_data, {"message": "password mismatch"}]
-    
     
     return [True, actual_data, {}]
 
 
 @api.route("/users")
 class Users(Resource):
+    #get all users by name only
     @jwt_required()
     @api.expect(parser)
     def get(self):
@@ -62,10 +60,18 @@ class Users(Resource):
         connector = getConnectToSQLdb()
         try:
             contains = request.args.get('contains')
+            page_size = int(request.args.get('page_size',10))
+            page_index = int(request.args.get('page_index',1))
+            offset_val = (page_index - 1) * page_size
+
             cursor = connector.cursor(buffered=True, dictionary=True)
             query = "SELECT full_name, email, created_at FROM users "
             filter_query = f"WHERE full_name like '%{contains}%'"
+
+            pagination_query = f" LIMIT {page_size} OFFSET {offset_val}"
+
             query = query + filter_query if contains else query
+            query = query + pagination_query if page_size or page_index else query
             cursor.execute(query)
             users = cursor.fetchall()
             if not users:
@@ -78,7 +84,7 @@ class Users(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
-    #creating new user data
+    #add new user data
     @jwt_required()
     @api.expect(users_post_parser)
     def post(self):
@@ -114,6 +120,7 @@ class Users(Resource):
 
 @api.route("/users/<int:id>")
 class User(Resource):
+    #get user by id only
     @jwt_required()
     def get(self, id):
         cursor = None
@@ -131,6 +138,7 @@ class User(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    #update user by id only
     @jwt_required()
     @api.expect(users_parser)
     def put(self, id):
@@ -148,8 +156,8 @@ class User(Resource):
             if not user:
                 return Response(status= 400, response=json.dumps({"message":f"User with {id} not found for update"}))
 
-            query = "UPDATE users SET email = %s, password = %s where id = %s"
-            cursor.execute(query, [data.get("email"), data.get("password"), id])
+            query = "UPDATE users SET full_name = %s, email = %s, password = %s where id = %s"
+            cursor.execute(query, [data.get("name"), data.get("email"), data.get("password"), id])
             connector.commit()
             return Response(status=200, response=json.dumps({"message": "Updated Successfully"}))
         except Exception as e:
@@ -158,6 +166,7 @@ class User(Resource):
             connector and connector.close()
             return Response(status = 500, response=json.dumps({"message": str(e)}))
 
+    #delete user by id only
     @jwt_required()
     def delete(self, id):
         cursor = None
