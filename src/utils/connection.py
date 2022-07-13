@@ -1,6 +1,6 @@
 import mysql.connector
 import os
- 
+
 def getConnectToSQLdb():
     mydb = None
     try:
@@ -8,7 +8,8 @@ def getConnectToSQLdb():
         host=os.getenv("MYSQL_HOST"),
         username=os.getenv("MYSQL_USER_NAME"),
         password=os.getenv("MYSQL_PASSWORD"),
-        database=os.getenv("MYSQL_DB")
+        database=os.getenv("MYSQL_DB"),
+        unix_socket=os.getenv("MYSQL_UNIX_SOCKET")
         )
 
         return mydb
