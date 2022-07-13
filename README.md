@@ -45,43 +45,43 @@ The APIs are build for five use cases, they are:
 Purpose: This usecase is mainly for registering a new user and logging a user.
 
 ### Login
-  - [POST /api/v1/login](#get-magazines)
+  - POST /api/v1/login
   - The user who is logged in will receive a access token and with that access token only it can access all the APIs.
 ##### [ Note - The access token is valid for 15 mins ]
 ### Register
-  - [POST /api/v1/register](#users)
+  - POST /api/v1/register
 
 ## Users
 Purpose: This section of APIs are to be used by the Admin or Head of the family to keep track of members.
-  - [POST /api/v1/users](#get-magazines)
-  - [GET /api/v1/users](#get-magazines)
-  - [PUT /api/v1/users/{id}](#get-magazines)
-  - [DELETE /api/v1/users/{id}](#get-magazines)
-  - [GET /api/v1/users/{id}](#get-magazines)
+  - POST /api/v1/users
+  - GET /api/v1/users
+  - PUT /api/v1/users/{id}
+  - DELETE /api/v1/users/{id}
+  - GET /api/v1/users/{id}
 
 ## Budgets
 Purpose: This section of APIs are to be used by logged-in users to add a budget, retrieve budgets or budget, and update or delete a budget.
-  - [POST /api/v1/budgets](#get-magazines)
-  - [GET /api/v1/budgets](#get-magazines)
-  - [PUT /api/v1/budgets/{id}](#get-magazines)
-  - [DELETE /api/v1/budgets/{id}](#get-magazines)
-  - [GET /api/v1/budgets/{id}](#get-magazines)
+  - POST /api/v1/budgets
+  - GET /api/v1/budgets]
+  - PUT /api/v1/budgets/{id}
+  - DELETE /api/v1/budgets/{id}
+  - GET /api/v1/budgets/{id}
 
 ## Categories
 Purpose: This section of APIs are to be used by logged-in users to add a category, retrieve categories or category, and update or delete a category.
-  - [POST /api/v1/categories](#get-magazines)
-  - [GET /api/v1/categories](#get-magazines)
-  - [PUT /api/v1/categories/{id}](#get-magazines)
-  - [DELETE /api/v1/categories/{id}](#get-magazines)
-  - [GET /api/v1/categories/{id}](#get-magazines)
+  - POST /api/v1/categories
+  - GET /api/v1/categories
+  - PUT /api/v1/categories/{id}
+  - DELETE /api/v1/categories/{id}
+  - GET /api/v1/categories/{id}
 
 ## Income Expenses
 Purpose: This section of APIs are to be used by logged-in users to add income expense, retrieve income expense or income expenses, and update or delete an income expense.
-  - [POST /api/v1/income_expenses](#get-magazines)
-  - [GET /api/v1/income_expenses](#get-magazines)
-  - [PUT /api/v1/income_expenses/{id}](#get-magazines)
-  - [DELETE /api/v1/income_expenses/{id}](#get-magazines)
-  - [GET /api/v1/income_expenses/{id}](#get-magazines)
+  - POST /api/v1/income_expenses
+  - GET /api/v1/income_expenses
+  - PUT /api/v1/income_expenses/{id}
+  - DELETE /api/v1/income_expenses/{id}
+  - GET /api/v1/income_expenses/{id}
 
 ## Technology Stacks
 - Python 3.9.2
