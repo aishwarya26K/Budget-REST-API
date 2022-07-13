@@ -65,7 +65,7 @@ class Users(Resource):
             offset_val = (page_index - 1) * page_size
 
             cursor = connector.cursor(buffered=True, dictionary=True)
-            query = "SELECT full_name, email, created_at FROM users "
+            query = "SELECT id, full_name, email, created_at FROM users "
             filter_query = f"WHERE full_name like '%{contains}%'"
 
             pagination_query = f" LIMIT {page_size} OFFSET {offset_val}"

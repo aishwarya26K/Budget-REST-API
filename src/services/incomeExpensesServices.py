@@ -55,7 +55,7 @@ class IncomeExpenses(Resource):
             offset_val = (page_index - 1) * page_size
 
             cursor = connector.cursor(buffered=True, dictionary=True)
-            query = f"SELECT name, created_at, amount FROM income_expenses WHERE user_id = {user_id} "
+            query = f"SELECT id, name, created_at, amount FROM income_expenses WHERE user_id = {user_id} "
             filter_query = f"AND name like '%{contains}%'"
 
             pagination_query = f" LIMIT {page_size} OFFSET {offset_val}"
@@ -149,7 +149,7 @@ class OneIncomeExpense(Resource):
 
             query = "SELECT name, created_at, amount  FROM income_expenses where id = %s"
             cursor.execute(query, [id])
-            income_expenses = cursor.fetchone()
+            income_expenses = cursor.fetchall()
             connector.commit()
             return Response(status = 200, response=json.dumps({"items": income_expenses,"count": len(income_expenses)}))
         except Exception as e:

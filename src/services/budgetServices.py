@@ -31,7 +31,7 @@ class Budgets(Resource):
             offset_val = (page_index - 1) * page_size
 
             cursor = connector.cursor(buffered=True, dictionary=True)
-            query = f"SELECT name, created_at FROM budgets WHERE user_id = {user_id} "
+            query = f"SELECT id, name, created_at FROM budgets WHERE user_id = {user_id} "
             filter_query = f"AND name like '%{contains}%'"
 
             pagination_query = f" LIMIT {page_size} OFFSET {offset_val}"
@@ -113,7 +113,7 @@ class Budget(Resource):
 
             query = "SELECT name, created_at FROM budgets where id = %s"
             cursor.execute(query, [id])
-            budget = cursor.fetchone()
+            budget = cursor.fetchall()
             connector.commit()
             return Response(status = 200, response=json.dumps({"items": budget,"count": len(budget)}))
         except Exception as e:

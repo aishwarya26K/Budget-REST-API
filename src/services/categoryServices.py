@@ -30,7 +30,7 @@ class Categories(Resource):
             page_index = int(request.args.get('page_index',1))
             offset_val = (page_index - 1) * page_size
 
-            query = f"SELECT name, created_at FROM categories WHERE user_id ={user_id}"
+            query = f"SELECT id, name, created_at FROM categories WHERE user_id ={user_id}"
             filter_query = f" AND name like '%{contains}%'"
 
             pagination_query = f" LIMIT {page_size} OFFSET {offset_val}"
@@ -116,7 +116,7 @@ class Category(Resource):
 
             query = "SELECT name, created_at FROM categories where id = %s"
             cursor.execute(query, [id])
-            category = cursor.fetchone()
+            category = cursor.fetchall()
             connector.commit()
             return Response(status = 200, response=json.dumps({"items": category,"count": len(category)}))
         except Exception as e:
