@@ -55,7 +55,7 @@ Purpose: This usecase is mainly for registering a new user and logging a user.
   - POST /api/v1/register
 
 ## Users
-Purpose: This section of APIs are to be used by the Admin or Head of the family to keep track of members.
+Purpose: This section of APIs are to be used for handling user related details.
   - POST /api/v1/users
   - GET /api/v1/users
   - PUT /api/v1/users/{id}
